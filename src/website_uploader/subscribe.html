@@ -1,0 +1,66 @@
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+<div class="container">   
+    <div class=" text-center mt-5 ">
+        <h1>AWS Newsletter Subscription Form</h1>
+    </div>
+
+    <div class="row ">
+        <div class="col-lg-6 mx-auto card card-body mt-2 p-4 bg-light"> 
+            <div class="container card-body">
+                <div class="alert alert-success d-none" role="alert">
+                    Thank you for your subscription!
+                </div>
+                <div class="alert alert-danger d-none" role="alert">
+                    Error!
+                </div>                 
+                <form id="subscription-form" role="form" method="post" action="#">
+                    <div class="controls">
+                        <div class="row">
+                            <div class="col-md-10">
+                                <div class="form-group">
+                                    <label for="form_email">Email *</label>
+                                    <input id="form_email" type="email" name="email" class="form-control"
+                                        placeholder="Please enter your email *" required="required"
+                                        data-error="Valid email is required.">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-10">
+                                <input type="submit" class="btn btn-success btn-send  pt-2 btn-block
+                " value="Submit">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $('#subscription-form').submit( function(e) {
+        e.preventDefault();
+        var formData = {}; 
+        $('form#subscription-form').serializeArray().map(function(x){formData[x.name] = x.value;});
+        console.log(formData)
+        $.ajax({
+                url: '###URL###',
+                type: 'POST',
+                crossDomain : true,
+                contentType: 'application/json; charset=UTF-8',
+                dataType: 'json',
+                data: JSON.stringify(formData),
+                success: function(data) {
+                    $("form#subscription-form").hide(function(){$("div.alert-success").removeClass("d-none");});           
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) { 
+                    $("form#subscription-form").hide(function(){$("div.alert-danger").removeClass("d-none");});           
+                } 
+        }); 
+    }); 
+
+</script>

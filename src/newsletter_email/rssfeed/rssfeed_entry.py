@@ -13,7 +13,4 @@ class rssfeed_entry:
     self.summary = entry['summary']
     self.link = entry['link']
     self.published = datetime.strptime(entry['published'], '%a, %d %b %Y %X %z').date()
-
-  def to_string(self):
-    return f"<tr><td>{self.published}</td><td>{self.title}</td></tr>"
   

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>AWS Newsletter</title>
+    <style>
+        .zui-table {
+            border: solid 1px #0F7E8D;
+            border-collapse: collapse;
+            border-spacing: 0;
+            font: normal 13px Arial, sans-serif;
+        }
+        .zui-table thead th {
+            background-color: #73DAB3; #0F7E8D; 
+            border: solid 1px #000;
+            color: #333;
+            padding: 10px;
+            text-align: left;
+        }
+        .zui-table tbody td {
+            border: solid 1px #000;
+            color: #333;
+            padding: 10px;
+            text-shadow: 1px 1px 1px #fff;
+        }
+    </style>
+</head>
+<body>
+
+<p>Hello Team!</p>
+
+<p>Let me present a recap of last week's launches.</p>
+
+<p>Follow the <a href="https://aws.amazon.com/blogs/aws/">AWS Blog</a>, <a href="https://aws.amazon.com/new/">What's New from Amazon Web Services</a>, and <a href="https://aws.amazon.com/podcasts/aws-podcast/">AWS Podcasts</a> for up-to-date news and information.</p>
+
+<p>Please contact us if you have any questions or need more information on any of these services.</p>
+
+
+{% if feeds[0].entries|length > 0 %}
+    <p><strong>Launch recap from last week:</strong></p>
+    <p><a href="https://aws.amazon.com/new/">What's New at AWS - Cloud Innovation & News</a></p>
+    <table class="zui-table">
+        <thead><tr><th>Product</th><th>Details</th><th>Date</th></tr></thead>
+        <tbody>
+        {% for wn_item in feeds[0].entries %}
+            <tr><td>{{ wn_item.product }}</td><td><a href="{{ wn_item.link }}">{{ wn_item.title }}</a></td><td>{{ wn_item.published.strftime('%d.%m.%Y') }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+
+{% if feeds[1].entries|length > 0 %}
+    <p><strong>Latest AWS Blog posts:</strong></p>
+    <table class="zui-table">
+        <thead><tr><th>Date</th><th>Details</th></tr></thead>
+        <tbody>
+        {% for wn_item in feeds[1].entries %}
+            <tr><td>{{ wn_item.published.strftime('%d.%m.%Y') }}</td><td><a href="{{ wn_item.link }}">{{ wn_item.title }}</a></td></tr>
+        {% endfor %}
+        </tbody>
+    </table>    
+{% endif %}
+
+{% if feeds[2].entries|length > 0 %}
+    <p><strong>Latest Security Blog posts:</strong></p>
+    <table class="zui-table">
+        <thead><tr><th>Date</th><th>Details</th></tr></thead>
+        <tbody>
+        {% for wn_item in feeds[2].entries %}
+            <tr><td>{{ wn_item.published.strftime('%d.%m.%Y') }}</td><td><a href="{{ wn_item.link }}">{{ wn_item.title }}</a></td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+
+{% if feeds[3].entries|length > 0 %}
+    <p><strong>Latest Architecture Blog posts:</strong></p>
+    <table class="zui-table">
+        <thead><tr><th>Date</th><th>Details</th></tr></thead>
+        <tbody>
+        {% for wn_item in feeds[3].entries %}
+            <tr><td>{{ wn_item.published.strftime('%d.%m.%Y') }}</td><td><a href="{{ wn_item.link }}">{{ wn_item.title }}</a></td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+
+{% if feeds[4].entries|length > 0 %}
+    <p><strong>Security Advisories:</strong></p>
+    <table class="zui-table">
+        <thead><tr><th>Date</th><th>Details</th></tr></thead>
+        <tbody>
+        {% for wn_item in feeds[4].entries %}
+            <tr><td>{{ wn_item.published.strftime('%d.%m.%Y') }}</td><td><a href="{{ wn_item.link }}">{{ wn_item.title }}</a></td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+
+<p>Unsubscribe <a href="https://sns.{{ Region }}.amazonaws.com/unsubscribe.html?SubscriptionArn={{ SubscriptionArn }}">here</a></p>
+</body>
+</html>

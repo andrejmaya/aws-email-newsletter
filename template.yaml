@@ -1,0 +1,304 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  aws-newsletter-backend
+
+  Backend for subscribe email addresses for AWS Newsletter
+Globals:
+  Function:
+    Timeout: 3
+
+Parameters: 
+  EmailSender:
+    Default: 'noreply@stormfsi.de'
+    Description: E-Mail Id from which the Mail will be send
+    Type: String    
+  EmailWhitelistPattern: 
+    Default: '(^[a-zA-Z0-9_.+-]+@reply\.(de|it|com|eu)$)'
+    Description: Regex to whitelist desired email domains
+    Type: String
+    MinLength: 26
+  MailFrequency: 
+    Default: 'rate(7 days)'
+    Description: how often the email should be send
+    Type: String
+  CutoffDays: 
+    Default: 7
+    Description: How old the feeds should be
+    Type: Number
+    MinValue: 1
+    MaxValue: 31    
+    
+Resources:
+  SubscribeWebsiteBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Join [ "-", [ !Ref AWS::StackName, !Ref AWS::AccountId, !Ref AWS::Region] ]
+      WebsiteConfiguration:
+        ErrorDocument: 'index.html'
+        IndexDocument: 'index.html'
+
+  SubscribeWebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SubscribeWebsiteBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:GetObject'
+            Effect: Allow
+            Resource: !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref SubscribeWebsiteBucket
+                - /*
+            Principal: '*'
+
+  NewsletterSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: "SNS_SUBSCRIBERS"
+
+  NewsletterSubscribersApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Cors:
+        AllowMethods: "'POST'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+        MaxAge: "'600'"    
+      StageName: prod
+      Tags:
+        application: newsletter
+
+  WebsiteUploaderLogGroup:
+      Type: AWS::Logs::LogGroup
+      DependsOn:
+        - WebsiteUploaderFunction
+      Properties:
+        LogGroupName: !Sub /aws/lambda/${WebsiteUploaderFunction}
+        RetentionInDays: 7
+
+  WebsiteUploaderFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: src/website_uploader/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Timeout: 10
+      Environment:
+        Variables:
+          API_URL: !Sub "https://${NewsletterSubscribersApi}.execute-api.${AWS::Region}.amazonaws.com/prod/subscribe/"
+          WEBSITE_BUCKET: !Ref SubscribeWebsiteBucket
+      Architectures:
+        - arm64
+      Policies:
+      - AWSLambdaBasicExecutionRole # Managed Policy
+      - Version: '2012-10-17' # Policy Document
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:PutObjectAcl
+            Resource: !Join ['', [!GetAtt SubscribeWebsiteBucket.Arn, "/*"]]
+      Tags:
+        application: newsletter
+
+  NewsletterSubscribersLogGroup:
+      Type: AWS::Logs::LogGroup
+      DependsOn:
+        - NewsletterSubscribersFunction
+      Properties:
+        LogGroupName: !Sub /aws/lambda/${NewsletterSubscribersFunction}
+        RetentionInDays: 3
+
+  NewsletterSubscribersFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: src/subscribe_backend/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Timeout: 10
+      Environment:
+        Variables:
+          SNS_SUBSCRIBERS_ARN: !GetAtt NewsletterSNSTopic.TopicArn
+          EMAIL_WHITELIST_PATTERN: !Ref EmailWhitelistPattern
+      Architectures:
+        - arm64
+      Policies:
+      - AWSLambdaBasicExecutionRole # Managed Policy
+      - Version: '2012-10-17' # Policy Document
+        Statement:
+          - Effect: Allow
+            Action:
+              - sns:Subscribe
+            Resource: !GetAtt NewsletterSNSTopic.TopicArn         
+      Events:
+        SubscribeEvent:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /subscribe
+            Method: post
+            RestApiId:
+              Ref: NewsletterSubscribersApi     
+      Tags:
+        application: newsletter
+
+  NewsletterEmailLogGroup:
+      Type: AWS::Logs::LogGroup
+      DependsOn:
+        - NewsletterEmailFunction
+      Properties:
+        LogGroupName: !Sub /aws/lambda/${NewsletterEmailFunction}
+        RetentionInDays: 3
+
+  NewsletterEmailFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: src/newsletter_email/
+      Handler: newsletter.main
+      Layers:
+        - !Ref NewsletterEmailDepLayer      
+      Runtime: python3.9
+      Timeout: 360      
+      Environment:
+        Variables:
+          CUTOFF_DAYS: !Ref CutoffDays
+          EMAIL_SENDER: !Ref EmailSender
+          SNS_SUBSCRIBERS_ARN: !GetAtt NewsletterSNSTopic.TopicArn
+      Architectures:
+        - arm64
+      Policies:
+      - AWSLambdaBasicExecutionRole # Managed Policy
+      - Version: '2012-10-17' # Policy Document
+        Statement:
+          - Effect: Allow
+            Action:
+              - sns:ListSubscriptionsByTopic
+            Resource: !GetAtt NewsletterSNSTopic.TopicArn
+          - Effect: Allow
+            Action:
+              - ses:SendEmail
+            Resource: "*"
+      Events:
+        NewsLetterEmailer:
+          Type: Schedule
+          Properties:
+            Schedule: !Ref MailFrequency
+            Name: newsletter-emailer
+            Enabled: True           
+      Tags:
+        application: newsletter  
+
+  NewsletterEmailDepLayer:
+      Type: AWS::Serverless::LayerVersion
+      Properties:
+          LayerName: newsletter-email-dependencies
+          ContentUri: src/newsletter_email/dependencies/
+          CompatibleRuntimes:
+            - python3.9
+          LicenseInfo: 'MIT'
+          RetentionPolicy: Retain
+
+  StackEventsHandler:
+    Type: Custom::stackeventshandler
+    Properties:
+      ServiceToken: !GetAtt StackEventsHandlerFunction.Arn  
+      StackName: !Ref 'AWS::StackName'
+      LambdaFunctionName: !Ref WebsiteUploaderFunction
+      BucketName: !Ref SubscribeWebsiteBucket
+
+  StackEventsHandlerFunctionLogGroup:
+      Type: AWS::Logs::LogGroup
+      DependsOn:
+        - StackEventsHandlerFunction
+      Properties:
+        LogGroupName: !Sub /aws/lambda/${StackEventsHandlerFunction}
+        RetentionInDays: 3
+
+  StackEventsHandlerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code: 
+        ZipFile: 
+          !Sub |
+            import boto3, logging
+            import cfnresponse
+            logger = logging.getLogger()
+            logger.setLevel(logging.INFO)
+
+            def lambda_handler(event, context):
+                logger.info("event: {}".format(event))
+                try:
+                    bucket = event['ResourceProperties']['BucketName']
+                    lambdaFunctionName = event['ResourceProperties']['LambdaFunctionName']
+                    if event['RequestType'] != 'Delete':
+                        logger.info(f"lambdaFunctionName: {lambdaFunctionName}, event['RequestType']: {event['RequestType']}")                    
+                        lambda_client = boto3.client('lambda')
+                        response = lambda_client.invoke(
+                            FunctionName=lambdaFunctionName,
+                        )
+                        logger.info(f"resonse: {response} from lambdaFunctionName: {lambdaFunctionName}")
+                    if event['RequestType'] == 'Delete':
+                        logger.info(f"bucket: {bucket}, event['RequestType']: {event['RequestType']}")                    
+                        s3 = boto3.resource('s3')
+                        bucket = s3.Bucket(bucket)
+                        for obj in bucket.objects.filter():
+                            logger.info("delete obj: {}".format(obj))
+                            s3.Object(bucket.name, obj.key).delete()
+
+                    sendResponseCfn(event, context, cfnresponse.SUCCESS)
+                except Exception as e:
+                    logger.info("Exception: {}".format(e))
+                    sendResponseCfn(event, context, cfnresponse.FAILED)
+
+            def sendResponseCfn(event, context, responseStatus):
+                responseData = {}
+                responseData['Data'] = {}
+                cfnresponse.send(event, context, responseStatus, responseData, "CustomResourcePhysicalID")            
+
+      Handler: "index.lambda_handler"
+      Runtime: python3.9
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt StackEventsHandlerFunctionRole.Arn  
+
+  StackEventsHandlerFunctionRole:
+    Type: "AWS::IAM::Role"
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - Effect: "Allow"
+            Principal: 
+              Service: 
+                - "lambda.amazonaws.com"
+            Action: 
+              - "sts:AssumeRole"
+      Path: "/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 'lambda:InvokeFunction'
+                Resource: !GetAtt WebsiteUploaderFunction.Arn
+              - Effect: "Allow"
+                Action: 
+                  - "s3:List*"
+                Resource: !Sub '${SubscribeWebsiteBucket.Arn}' 
+              - Effect: "Allow"
+                Action: 
+                  - "s3:Delete*"
+                  - "s3:List*"
+                  - "s3:Get*"                  
+                Resource: !Sub '${SubscribeWebsiteBucket.Arn}/*'                
+           
+Outputs:
+  WebsiteBucket:
+    Description: "Website URL of the bucket to host the subscription form"
+    Value: !Join ['', [!GetAtt SubscribeWebsiteBucket.WebsiteURL, '/subscribe.html']]
