@@ -1,33 +1,16 @@
-from rssfeed.rssfeed import *
+from rssfeed_xml.rssfeed_xml import *
+from rssfeed_json.rssfeed_json import *
 from datetime import datetime, timedelta
 from jinja2 import Environment, FileSystemLoader
-import boto3, os, logging, sys
+import boto3, os, logging, sys, json
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-feed_list = [
-  {
-    'link':'https://aws.amazon.com/about-aws/whats-new/recent/feed/',
-    'class_name':'rssfeed_entry_whatsnew',
-  },
-  {
-    'link':'https://aws.amazon.com/blogs/aws/feed/',
-    'class_name':'rssfeed_entry',
-  },
-  {
-    'link':'https://aws.amazon.com/blogs/security/feed/',
-    'class_name':'rssfeed_entry',
-  },
-  {
-    'link':'https://aws.amazon.com/blogs/architecture/feed/',
-    'class_name':'rssfeed_entry',
-  },
-  {
-    'link':'https://aws.amazon.com/security/security-bulletins/rss/feed/',
-    'class_name':'rssfeed_entry',
-  }
-]
+with open("rssfeed_xml/feedlist.json", "r") as feed_list_xml_f:
+  feed_list_xml = json.load(feed_list_xml_f)
+with open("rssfeed_json/feedlist.json", "r") as feed_list_json_f:
+  feed_list_json = json.load(feed_list_json_f)
 
 def main(event, context):
   ses_client = boto3.client('ses')
@@ -35,7 +18,7 @@ def main(event, context):
   cutoff_date = (datetime.now()-timedelta(days=int(os.environ['CUTOFF_DAYS']))).date()
   logging.info(f"subscriptions:{subscriptions}")
   
-  feeds = [rssfeed(feed, cutoff_date) for feed in feed_list]
+  feeds = [rssfeed_xml(feed, cutoff_date) for feed in feed_list_xml]
 
   for subscriber in subscriptions:
     endpoint = subscriber['Endpoint']

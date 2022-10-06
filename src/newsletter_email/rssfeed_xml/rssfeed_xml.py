@@ -1,6 +1,6 @@
 import feedparser, importlib
 
-class rssfeed:
+class rssfeed_xml:
   """
     title: str
     link: str
@@ -14,7 +14,7 @@ class rssfeed:
     self.entries = []
 
     for entry in feed_output.entries:
-      module = importlib.import_module('rssfeed.'+feed['class_name'])
+      module = importlib.import_module('rssfeed_xml.'+feed['class_name'])
       class_ = getattr(module, feed['class_name'])
       entry_obj = class_(entry)
       self.entries.append(entry_obj) if entry_obj.published > cutoff_date else None

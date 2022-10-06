@@ -1,6 +1,6 @@
-from rssfeed.rssfeed_entry import *
+from rssfeed_xml.rssfeed_xml_entry import *
 
-class rssfeed_entry_whatsnew(rssfeed_entry):
+class rssfeed_xml_entry_whatsnew(rssfeed_xml_entry):
   """
     product: str
   """

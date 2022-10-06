@@ -96,6 +96,18 @@
     </table>
 {% endif %}
 
+{% if feeds[5].entries|length > 0 %}
+    <p><strong>Latest AWS YouTube Channel Videos:</strong></p>
+    <table class="zui-table">
+        <thead><tr><th>Date</th><th>Video</th></tr></thead>
+        <tbody>
+        {% for wn_item in feeds[5].entries %}
+            <tr><td>{{ wn_item.published.strftime('%d.%m.%Y') }}</td><td><a href="{{ wn_item.link }}">{{ wn_item.title }}</a></td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+
 <p>Unsubscribe <a href="https://sns.{{ Region }}.amazonaws.com/unsubscribe.html?SubscriptionArn={{ SubscriptionArn }}">here</a></p>
 </body>
 </html>
