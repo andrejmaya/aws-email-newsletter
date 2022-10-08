@@ -19,11 +19,21 @@ def main(event, context):
   logging.info(f"subscriptions:{subscriptions}")
   
   feeds = [rssfeed_xml(feed, cutoff_date) for feed in feed_list_xml]
+  feeds += [rssfeed_json(feed, cutoff_date) for feed in feed_list_json]
+
+  mail_body_part = render_mail(
+    feeds=feeds, 
+    template="body.jinja"
+  )
 
   for subscriber in subscriptions:
     endpoint = subscriber['Endpoint']
 
-    mail_body = render_mail(feeds, subscriber['SubscriptionArn'])
+    mail_body = mail_body_part + render_mail(
+      subscriptionArn=subscriber['SubscriptionArn'],
+      template="footer.jinja"
+    )
+    
     logging.info(f"endpoint:{endpoint}, mail_body:{mail_body}")
     response = ses_client.send_email(
         Source=os.environ['EMAIL_SENDER'],
@@ -62,13 +72,12 @@ def get_subscribers():
 def get_active_subscribers(resp_subscriptions):
   return [obj for obj in resp_subscriptions if obj['SubscriptionArn'].startswith('arn:aws:sns')]
 
-def render_mail(feeds, subscriptionArn):
+def render_mail(**kwargs):
   environment = Environment(loader=FileSystemLoader("email_template/"))
-  template = environment.get_template("template.jinja")
+  template = environment.get_template(kwargs.get("template"))
 
   return template.render(
-    feeds=feeds,
-    SubscriptionArn=subscriptionArn,
+    kwargs,
     Region=boto3.session.Session().region_name
   )
 
