@@ -30,7 +30,7 @@ def main(event, context):
     endpoint = subscriber['Endpoint']
 
     mail_body = mail_body_part + render_mail(
-      subscriptionArn=subscriber['SubscriptionArn'],
+      SubscriptionArn=subscriber['SubscriptionArn'],
       template="footer.jinja"
     )
     
