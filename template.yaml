@@ -27,7 +27,11 @@ Parameters:
     Description: How old the feeds should be
     Type: Number
     MinValue: 1
-    MaxValue: 31    
+    MaxValue: 31  
+  OpsEmailid:
+    Description: E-Mail Id for operational notifications
+    Type: String 
+    AllowedPattern: '^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'      
     
 Resources:
   SubscribeWebsiteBucket:
@@ -297,7 +301,69 @@ Resources:
                   - "s3:List*"
                   - "s3:Get*"                  
                 Resource: !Sub '${SubscribeWebsiteBucket.Arn}/*'                
-           
+  NewsletterLambdaAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join ['-',[!Ref 'AWS::StackName', 'alarm']]
+      AlarmDescription: "Alarm if lambda errors out too many times"
+      AlarmActions:
+      - !Ref NewsletterOpsTopic
+      Metrics:
+        - Id: m1
+          MetricStat:
+            Metric:
+              Dimensions:
+                - Name: "FunctionName"
+                  Value: !Ref NewsletterSubscribersFunction
+              MetricName: Errors
+              Namespace: AWS/Lambda
+            Period: 300
+            Stat: Minimum
+          ReturnData: False
+        - Id: m2
+          MetricStat:
+            Metric:
+              Dimensions:
+                - Name: "FunctionName"
+                  Value: !Ref NewsletterEmailFunction        
+              MetricName: Errors
+              Namespace: AWS/Lambda
+            Period: 300
+            Stat: Minimum
+          ReturnData: False
+        - Id: expr1
+          Expression: IF(m1 OR m2, 1, 0)
+          Label: NewsletterBackendException      
+      ComparisonOperator: "GreaterThanThreshold"
+      Threshold: 0
+      EvaluationPeriods: 1
+
+  NewsletterOpsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: !Ref 'AWS::StackName'
+      TopicName: !Ref 'AWS::StackName'
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref OpsEmailid
+
+  NewsletterOpsTopicPolicy:
+    Type: 'AWS::SNS::TopicPolicy'
+    Properties:
+      Topics:
+        - !Ref NewsletterOpsTopic
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Sid: AllowCloudWatchEvents
+            Action: 'sns:Publish'
+            Resource: !Ref NewsletterOpsTopic
+            Principal:
+              Service: 'cloudwatch.amazonaws.com'
+            Condition:
+              StringEquals:
+                AWS:SourceOwner: !Ref 'AWS::AccountId'            
 Outputs:
   WebsiteBucket:
     Description: "Website URL of the bucket to host the subscription form"

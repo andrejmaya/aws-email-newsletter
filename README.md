@@ -11,12 +11,20 @@
 * Verified Domains and/or E-Mail Id in SES (see [here](https://docs.aws.amazon.com/ses/latest/dg/creating-identities.html))
 
 ## Installation :construction_worker:
-1. Check the values in `Parameters` section in [template.yaml](./template.yaml) and adjust to your needs
-2. Run following commands:
-	````
-	pip install -r src/newsletter_email/requirements.txt -t src/newsletter_email/dependencies/python
-	sam deploy --guided
-	````
+1. Install python modules:
+```
+pip install -r src/newsletter_email/requirements.txt -t src/newsletter_email/dependencies/python
+```
+2. Run SAM deployment:
+````
+sam deploy --parameter-overrides \
+	EmailSender=noreply@stormfsi.de \
+	"EmailWhitelistPattern=(^[a-zA-Z0-9_.+-]+@reply\.(de|it|com|eu)$)" \
+	"MailFrequency=rate(7\ days)" \
+	CutoffDays=7 \
+	OpsEmailid=<YOUR_OPS_EMAIL> \
+--guided
+````
 
 See these example values for SAM:
 ```
