@@ -2,7 +2,7 @@ import feedparser, importlib
 
 
 class rssfeed_xml:
-    """
+   """
     title: str
     link: str
     entries: []  
@@ -14,7 +14,6 @@ class rssfeed_xml:
         feed_output = feedparser.parse(self.link)
         self.title = feed_output.feed.title
         self.entries = []
-
         for entry in feed_output.entries:
             module = importlib.import_module('rssfeed_xml.' + feed['class_name'])
             class_ = getattr(module, feed['class_name'])
