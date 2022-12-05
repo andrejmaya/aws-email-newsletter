@@ -10,6 +10,7 @@ class rssfeed_xml:
 
     def __init__(self, feed, cutoff_date):
         self.link = feed['link']
+
         feed_output = feedparser.parse(self.link)
         self.title = feed_output.feed.title
         self.entries = []
