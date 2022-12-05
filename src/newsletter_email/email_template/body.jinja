@@ -40,7 +40,7 @@
     <p><strong>Launch recap from last week:</strong></p>
     <p><a href="https://aws.amazon.com/new/">What's New at AWS - Cloud Innovation & News</a></p>
     <table class="zui-table">
-        <thead><tr><th>Product</th><th>Details</th><th>Date</th></tr></thead>
+        <thead><tr><th>Category</th><th>Details</th><th>Date</th></tr></thead>
         <tbody>
         {% for wn_item in feeds[0].entries %}
             <tr><td>{{ wn_item.product }}</td><td><a href="{{ wn_item.link }}">{{ wn_item.title }}</a></td><td>{{ wn_item.published.strftime('%d.%m.%Y') }}</td></tr>
