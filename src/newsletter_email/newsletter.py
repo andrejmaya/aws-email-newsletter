@@ -16,7 +16,8 @@ with open("rssfeed_json/feedlist.json", "r") as feed_list_json_f:
 def main(event, context):
     ses_client = boto3.client('ses')
     subscriptions = get_subscribers()
-    cutoff_date = (datetime.now() - timedelta(days=int(os.environ['CUTOFF_DAYS']))).date()
+    cutoff_days = os.environ['CUTOFF_DAYS'] if is_local_test() == False else 7
+    cutoff_date = (datetime.now()-timedelta(days=int(cutoff_days))).date()
     logging.info(f"subscriptions:{subscriptions}")
 
     feeds = [rssfeed_xml(feed, cutoff_date) for feed in feed_list_xml]
@@ -36,39 +37,45 @@ def main(event, context):
         )
 
         logging.info(f"endpoint:{endpoint}, mail_body:{mail_body}")
-        response = ses_client.send_email(
-            Source=os.environ['EMAIL_SENDER'],
-            Destination={
-                'ToAddresses': [
-                    endpoint,
-                ]
-            },
-            Message={
-                'Subject': {
-                    'Data': 'AWS Roadmap Items of Interest',
+        if is_local_test() == False:
+            response = ses_client.send_email(
+                Source=os.environ['EMAIL_SENDER'],
+                Destination={
+                    'ToAddresses': [
+                        endpoint,
+                    ]
                 },
-                'Body': {
-                    'Html': {
-                        'Data': mail_body,
-                        'Charset': 'UTF-8'
+                Message={
+                    'Subject': {
+                        'Data': 'AWS Roadmap Items of Interest',
+                    },
+                    'Body': {
+                        'Html': {
+                            'Data': mail_body,
+                            'Charset': 'UTF-8'
+                        }
                     }
                 }
-            }
-        )
+            )
 
 
 def get_subscribers():
     sns_client = boto3.client('sns')
-    response = sns_client.list_subscriptions_by_topic(
-        TopicArn=os.environ['SNS_SUBSCRIBERS_ARN']
-    )
-    subscriptions = get_active_subscribers(response['Subscriptions'])
-    while "NextToken" in response:
+    if is_local_test() == False:
         response = sns_client.list_subscriptions_by_topic(
-            TopicArn=os.environ['SNS_SUBSCRIBERS_ARN'],
-            NextToken=response["NextToken"]
+            TopicArn=os.environ['SNS_SUBSCRIBERS_ARN']
         )
-        subscriptions.extend(get_active_subscribers(response['Subscriptions']))
+        subscriptions = get_active_subscribers(response['Subscriptions'])
+        while "NextToken" in response:
+            response = sns_client.list_subscriptions_by_topic(
+                TopicArn=os.environ['SNS_SUBSCRIBERS_ARN'],
+                NextToken=response["NextToken"]
+            )
+            subscriptions.extend(
+                get_active_subscribers(response['Subscriptions']))
+    else:
+        subscriptions = [{'SubscriptionArn': '12345',
+                          'Endpoint': 'johndoe@example.com'}]
     return subscriptions
 
 
@@ -84,6 +91,13 @@ def render_mail(**kwargs):
         kwargs,
         Region=boto3.session.Session().region_name
     )
+
+
+def is_local_test():
+    if 'LOCAL_TEST' in os.environ and os.environ['LOCAL_TEST'] == 'true':
+        return True
+    else:
+        return False
 
 
 if __name__ == "__main__":
