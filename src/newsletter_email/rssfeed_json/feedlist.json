@@ -1,6 +1,6 @@
 [
   {
-    "link":"https://aws.amazon.com/api/dirs/items/search/?item.directoryId=events-master&tags.id=events-master%23series%23aws-online-tech-talks",
+    "link":"https://aws.amazon.com/api/dirs/items/search?item.directoryId=alias%23ott-all&sort_by=item.additionalFields.startDate&sort_order=asc&size=30&item.locale=en_US&tags.id=GLOBAL%23event-type%23virtual&tags.id=GLOBAL%23series%23aws-online-tech-talks%7CGLOBAL%23series%23aws-virtual-workshops%7CGLOBAL%23series%23aws-fireside-chat%7CGLOBAL%23series%23aws-office-hours%7CGLOBAL%23series%23aws-online-tech-talks%7CGLOBAL%23series%23aws-virtual-workshops%7CGLOBAL%23series%23aws-fireside-chat%7CGLOBAL%23series%23aws-office-hours",
     "class_name":"rssfeed_json_entry"
   }
 ]
