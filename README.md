@@ -29,14 +29,26 @@ sam deploy --parameter-overrides \
 See these example values for SAM:
 ```
 	Stack Name [sam-app]: awsnewsletteremailer
-	AWS Region [eu-central-1]: 
+	AWS Region [eu-central-1]:
 	Confirm changes before deploy [y/N]: N
-	Allow SAM CLI IAM role creation [Y/n]: Y 
+	Allow SAM CLI IAM role creation [Y/n]: Y
 	Disable rollback [y/N]: N
 	NewsletterSubscribersFunction may not have authorization defined, Is this okay? [y/N]: y
 	Save arguments to configuration file [Y/n]: Y
 	SAM configuration file [samconfig.toml]: <ENTER>
 	SAM configuration environment [default]: <ENTER>
+```
+
+## Test locally
+First of all you need to set `export LOCAL_TEST=true`.
+
+Then create a virtual env and run the newsletter.py
+```
+python3 -m venv /tmp/python_venv
+. /tmp/python_venv/bin/activate
+pip install -r src/newsletter_email/requirements.txt
+cd src/newsletter_email
+python newsletter.py
 ```
 
 ## Usage :running:
