@@ -14,7 +14,7 @@ Parameters:
     Description: E-Mail Id from which the Mail will be send
     Type: String    
   EmailWhitelistPattern: 
-    Default: '(^[a-zA-Z0-9_.+-]+@reply\.(de|it|com|eu)$)'
+    Default: '(^([a-zA-Z0-9_.+-]+@reply\.(de|it|com|eu))|([a-zA-Z0-9_.+-]+@amazon\.de)$)'
     Description: Regex to whitelist desired email domains
     Type: String
     MinLength: 26
