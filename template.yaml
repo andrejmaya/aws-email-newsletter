@@ -4,35 +4,32 @@ Description: >
   aws-newsletter-backend
 
   Backend for subscribe email addresses for AWS Newsletter
-Globals:
-  Function:
-    Timeout: 3
 
-Parameters: 
+Parameters:
   EmailSender:
     Default: 'noreply@stormfsi.de'
     Description: E-Mail Id from which the Mail will be send
-    Type: String    
-  EmailWhitelistPattern: 
+    Type: String
+  EmailWhitelistPattern:
     Default: '(^[a-zA-Z0-9_.+-]+@reply\.(de|it|com|eu)$)'
     Description: Regex to whitelist desired email domains
     Type: String
     MinLength: 26
-  MailFrequency: 
+  MailFrequency:
     Default: 'rate(7 days)'
     Description: how often the email should be send
     Type: String
-  CutoffDays: 
+  CutoffDays:
     Default: 7
     Description: How old the feeds should be
     Type: Number
     MinValue: 1
-    MaxValue: 31  
+    MaxValue: 31
   OpsEmailid:
     Description: E-Mail Id for operational notifications
-    Type: String 
-    AllowedPattern: '^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'      
-    
+    Type: String
+    AllowedPattern: '^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+
 Resources:
   SubscribeWebsiteBucket:
     Type: 'AWS::S3::Bucket'
@@ -71,7 +68,7 @@ Resources:
         AllowMethods: "'POST'"
         AllowHeaders: "'*'"
         AllowOrigin: "'*'"
-        MaxAge: "'600'"    
+        MaxAge: "'600'"
       StageName: prod
       Tags:
         application: newsletter
@@ -137,7 +134,7 @@ Resources:
           - Effect: Allow
             Action:
               - sns:Subscribe
-            Resource: !GetAtt NewsletterSNSTopic.TopicArn         
+            Resource: !GetAtt NewsletterSNSTopic.TopicArn
       Events:
         SubscribeEvent:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -145,7 +142,7 @@ Resources:
             Path: /subscribe
             Method: post
             RestApiId:
-              Ref: NewsletterSubscribersApi     
+              Ref: NewsletterSubscribersApi
       Tags:
         application: newsletter
 
@@ -163,9 +160,9 @@ Resources:
       CodeUri: src/newsletter_email/
       Handler: newsletter.main
       Layers:
-        - !Ref NewsletterEmailDepLayer      
+        - !Ref NewsletterEmailDepLayer
       Runtime: python3.9
-      Timeout: 360      
+      Timeout: 360
       Environment:
         Variables:
           CUTOFF_DAYS: !Ref CutoffDays
@@ -190,10 +187,10 @@ Resources:
           Type: Schedule
           Properties:
             Schedule: !Ref MailFrequency
-            Name: newsletter-emailer
-            Enabled: True           
+            Name: !Join ['-',[!Ref 'AWS::StackName', 'event']]
+            Enabled: True
       Tags:
-        application: newsletter  
+        application: newsletter
 
   NewsletterEmailDepLayer:
       Type: AWS::Serverless::LayerVersion
@@ -208,7 +205,7 @@ Resources:
   StackEventsHandler:
     Type: Custom::stackeventshandler
     Properties:
-      ServiceToken: !GetAtt StackEventsHandlerFunction.Arn  
+      ServiceToken: !GetAtt StackEventsHandlerFunction.Arn
       StackName: !Ref 'AWS::StackName'
       LambdaFunctionName: !Ref WebsiteUploaderFunction
       BucketName: !Ref SubscribeWebsiteBucket
@@ -224,8 +221,8 @@ Resources:
   StackEventsHandlerFunction:
     Type: AWS::Lambda::Function
     Properties:
-      Code: 
-        ZipFile: 
+      Code:
+        ZipFile:
           !Sub |
             import boto3, logging
             import cfnresponse
@@ -238,14 +235,14 @@ Resources:
                     bucket = event['ResourceProperties']['BucketName']
                     lambdaFunctionName = event['ResourceProperties']['LambdaFunctionName']
                     if event['RequestType'] != 'Delete':
-                        logger.info(f"lambdaFunctionName: {lambdaFunctionName}, event['RequestType']: {event['RequestType']}")                    
+                        logger.info(f"lambdaFunctionName: {lambdaFunctionName}, event['RequestType']: {event['RequestType']}")
                         lambda_client = boto3.client('lambda')
                         response = lambda_client.invoke(
                             FunctionName=lambdaFunctionName,
                         )
                         logger.info(f"resonse: {response} from lambdaFunctionName: {lambdaFunctionName}")
                     if event['RequestType'] == 'Delete':
-                        logger.info(f"bucket: {bucket}, event['RequestType']: {event['RequestType']}")                    
+                        logger.info(f"bucket: {bucket}, event['RequestType']: {event['RequestType']}")
                         s3 = boto3.resource('s3')
                         bucket = s3.Bucket(bucket)
                         for obj in bucket.objects.filter():
@@ -260,25 +257,25 @@ Resources:
             def sendResponseCfn(event, context, responseStatus):
                 responseData = {}
                 responseData['Data'] = {}
-                cfnresponse.send(event, context, responseStatus, responseData, "CustomResourcePhysicalID")            
+                cfnresponse.send(event, context, responseStatus, responseData, "CustomResourcePhysicalID")
 
       Handler: "index.lambda_handler"
       Runtime: python3.9
       MemorySize: 128
       Timeout: 10
-      Role: !GetAtt StackEventsHandlerFunctionRole.Arn  
+      Role: !GetAtt StackEventsHandlerFunctionRole.Arn
 
   StackEventsHandlerFunctionRole:
     Type: "AWS::IAM::Role"
-    Properties: 
-      AssumeRolePolicyDocument: 
+    Properties:
+      AssumeRolePolicyDocument:
         Version: "2012-10-17"
-        Statement: 
+        Statement:
           - Effect: "Allow"
-            Principal: 
-              Service: 
+            Principal:
+              Service:
                 - "lambda.amazonaws.com"
-            Action: 
+            Action:
               - "sts:AssumeRole"
       Path: "/"
       ManagedPolicyArns:
@@ -292,15 +289,15 @@ Resources:
                 Action: 'lambda:InvokeFunction'
                 Resource: !GetAtt WebsiteUploaderFunction.Arn
               - Effect: "Allow"
-                Action: 
+                Action:
                   - "s3:List*"
-                Resource: !Sub '${SubscribeWebsiteBucket.Arn}' 
+                Resource: !Sub '${SubscribeWebsiteBucket.Arn}'
               - Effect: "Allow"
-                Action: 
+                Action:
                   - "s3:Delete*"
                   - "s3:List*"
-                  - "s3:Get*"                  
-                Resource: !Sub '${SubscribeWebsiteBucket.Arn}/*'                
+                  - "s3:Get*"
+                Resource: !Sub '${SubscribeWebsiteBucket.Arn}/*'
   NewsletterLambdaAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
@@ -325,7 +322,7 @@ Resources:
             Metric:
               Dimensions:
                 - Name: "FunctionName"
-                  Value: !Ref NewsletterEmailFunction        
+                  Value: !Ref NewsletterEmailFunction
               MetricName: Errors
               Namespace: AWS/Lambda
             Period: 300
@@ -333,7 +330,7 @@ Resources:
           ReturnData: False
         - Id: expr1
           Expression: IF(m1 OR m2, 1, 0)
-          Label: NewsletterBackendException      
+          Label: NewsletterBackendException
       ComparisonOperator: "GreaterThanThreshold"
       Threshold: 0
       EvaluationPeriods: 1
@@ -363,8 +360,82 @@ Resources:
               Service: 'cloudwatch.amazonaws.com'
             Condition:
               StringEquals:
-                AWS:SourceOwner: !Ref 'AWS::AccountId'            
+                AWS:SourceOwner: !Ref 'AWS::AccountId'
+  DeploymentPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Join ['-',[!Ref 'AWS::StackName', 'cicd-deployment-policy']]
+      Description: Policy which can be used by a principal to deploy the newsletter solution
+      Path: /
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Sid: GeneralStatement
+            Action:
+              - "s3:Get*"
+              - "s3:CreateBucket"
+              - "s3:Describe*"
+              - "s3:Put*"
+              - "cloudformation:CreateChangeSet"
+              - "cloudformation:ExecuteChangeSet"
+              - "cloudformation:Describe*"
+              - "cloudformation:Get*"
+            Resource: "*"
+          - Effect: Allow
+            Sid: CW
+            Action:
+              - "cloudwatch:*"
+            Resource: !Sub "arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:${NewsletterLambdaAlarm}*"
+          - Effect: Allow
+            Sid: Events
+            Action:
+              - "events:*"
+            Resource: !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/${AWS::StackName}-event*"
+          - Effect: Allow
+            Sid: CloudFormation
+            Action:
+              - "cloudformation:*"
+            Resource: !Sub "arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}*"
+          - Effect: Allow
+            Sid: APIGateway
+            Action:
+              - "apigateway:POST"
+              - "apigateway:DELETE"
+              - "apigateway:PATCH"
+              - "apigateway:GET"
+            Resource:
+              - !Sub "arn:aws:apigateway:${AWS::Region}::/restapis"
+              - !Sub "arn:aws:apigateway:${AWS::Region}::/restapis/*"
+          - Effect: Allow
+            Sid: Logs
+            Action:
+              - "logs:*"
+            Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-*"
+          - Effect: Allow
+            Sid: Iam
+            Action:
+              - "iam:*"
+            Resource: !Sub "arn:aws:iam::${AWS::AccountId}:role/${AWS::StackName}-*"
+          - Effect: Allow
+            Sid: SNS
+            Action:
+              - "sns:*"
+            Resource:
+              - !Sub "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:SNS_SUBSCRIBERS"
+              - !Sub "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${AWS::StackName}"
+          - Effect: Allow
+            Sid: Lambda
+            Action:
+              - "lambda:*"
+            Resource:
+              - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-*"
+              - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:newsletter-email-*"
+
 Outputs:
   WebsiteBucket:
     Description: "Website URL of the bucket to host the subscription form"
     Value: !Join ['', [!GetAtt SubscribeWebsiteBucket.WebsiteURL, '/subscribe.html']]
+  DeploymentPolicy:
+    Description: "Least priviledge IAM policy for your CICD deployment user"
+    Value: !Ref DeploymentPolicy
