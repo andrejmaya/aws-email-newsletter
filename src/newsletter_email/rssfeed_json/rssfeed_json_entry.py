@@ -18,4 +18,11 @@ class rssfeed_json_entry:
     self.title = entry['headline']
     self.link = entry['headlineUrl']
     self.level = entry['expertise']
-    self.published = datetime.strptime(startDateTime,'%d-%b-%y').date()
+    if "-" in startDateTime:
+      self.published = datetime.strptime(startDateTime,'%d-%b-%y').date()
+    elif "," in startDateTime:
+      self.published = datetime.strptime(startDateTime,'%b %d, %Y').date()
+    else:
+      self.published = datetime.strptime('01-01-70','%d-%m-%y').date()
+      raise Exception(f"unknown date format: {startDateTime}")
+
