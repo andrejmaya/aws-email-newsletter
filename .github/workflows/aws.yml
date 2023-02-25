@@ -9,6 +9,7 @@ env:
   ROLE_NAME: aws-email-newsletter-role-oidc-stack
 
 permissions:
+  id-token: write
   contents: read
 
 jobs:
