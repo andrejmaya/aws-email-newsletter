@@ -391,7 +391,9 @@ Resources:
             Sid: Events
             Action:
               - "events:*"
-            Resource: !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/${AWS::StackName}-event*"
+            Resource:
+              - !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/${AWS::StackName}-event*"
+              - !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/newsletter-emailer"
           - Effect: Allow
             Sid: CloudFormation
             Action:
