@@ -1,0 +1,35 @@
+
+name: Deploy via AWS SAM
+
+on:
+  push:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: prod
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: configure aws credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.ROLE_NAME }}
+        aws-region: ${{ vars.AWS_REGION }}
+
+    - name: SAM Deploy
+      id: build-image
+      run: |
+        cat >samconfig.toml <<EOL
+        ${{ vars.SAMCONFIG_TOML }}
+        EOL
+        sam --version
+        pip install -r src/newsletter_email/requirements.txt -t src/newsletter_email/dependencies/python
+        sam deploy
