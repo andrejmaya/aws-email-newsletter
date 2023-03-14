@@ -17,7 +17,7 @@ class rssfeed_json_entry:
 
     self.title = entry['headline']
     self.link = entry['headlineUrl']
-    self.level = entry['expertise']
+    self.level = entry['expertise'] if 'expertise' in entry else "unknown"
     if "-" in startDateTime:
       self.published = datetime.strptime(startDateTime,'%d-%b-%y').date()
     elif "," in startDateTime:

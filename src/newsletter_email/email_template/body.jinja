@@ -10,7 +10,7 @@
             font: normal 13px Arial, sans-serif;
         }
         .zui-table thead th {
-            background-color: #73DAB3; #0F7E8D; 
+            background-color: #73DAB3; #0F7E8D;
             border: solid 1px #000;
             color: #333;
             padding: 10px;
@@ -59,7 +59,7 @@
             <tr><td>{{ wn_item.published.strftime('%d.%m.%Y') }}</td><td><a href="{{ wn_item.link }}">{{ wn_item.title }}</a></td></tr>
         {% endfor %}
         </tbody>
-    </table>    
+    </table>
 {% endif %}
 
 {% if feeds[2].entries|length > 0 %}
@@ -123,6 +123,20 @@
         <tbody>
         {% for wn_item in feeds[6].entries %}
             <tr><td>{{ wn_item.published.strftime('%d.%m.%Y') }}</td><td><a href="{{ wn_item.link }}">{{ wn_item.title }}</a></td><td>{{ wn_item.level }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+
+{% if feeds[7].entries|length > 0 %}
+    <br />
+    <p><strong>AWS PartnerCast Talks:</strong></p>
+    <p><a href="https://aws.amazon.com/partners/training/partnercast/">AWS PartnerCast Website</a></p>
+    <table class="zui-table">
+        <thead><tr><th>Date</th><th>Topic</th></tr></thead>
+        <tbody>
+        {% for wn_item in feeds[7].entries %}
+            <tr><td>{{ wn_item.published.strftime('%d.%m.%Y') }}</td><td><a href="{{ wn_item.link }}">{{ wn_item.title }}</a></td></tr>
         {% endfor %}
         </tbody>
     </table>
