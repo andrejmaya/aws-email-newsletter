@@ -10,7 +10,7 @@ class rssfeed_json_entry:
     published: date
   """
 
-  def __init__(self, entry):
+  def __init__(self, entry, feed):
     #e.g. entry['startDateTime'] == "2022-10-06T20:39:20+00:00"
     logging.info(f"rssfeed_json_entry:{entry}")
     startDateTime = entry['startDate'] if 'startDate' in entry else "1970-01-01T00:00:00+00:00"
@@ -18,11 +18,5 @@ class rssfeed_json_entry:
     self.title = entry['headline']
     self.link = entry['headlineUrl']
     self.level = entry['expertise'] if 'expertise' in entry else "unknown"
-    if "-" in startDateTime:
-      self.published = datetime.strptime(startDateTime,'%d-%b-%y').date()
-    elif "," in startDateTime:
-      self.published = datetime.strptime(startDateTime,'%b %d, %Y').date()
-    else:
-      self.published = datetime.strptime('01-01-70','%d-%m-%y').date()
-      raise Exception(f"unknown date format: {startDateTime}")
+    self.published = datetime.strptime(startDateTime,feed['date_format']).date()
 

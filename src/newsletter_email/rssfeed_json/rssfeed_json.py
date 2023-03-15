@@ -23,6 +23,6 @@ class rssfeed_json:
     for entry in resp['items']:
       module = importlib.import_module('rssfeed_json.'+feed['class_name'])
       class_ = getattr(module, feed['class_name'])
-      entry_obj = class_(entry['item']['additionalFields'])
+      entry_obj = class_(entry['item']['additionalFields'], feed)
       logging.info(f"entry_obj.published:{entry_obj.published} > cutoff_date:{cutoff_date}?")
       self.entries.append(entry_obj) if entry_obj.published > cutoff_date else None
