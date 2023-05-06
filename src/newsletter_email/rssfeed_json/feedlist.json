@@ -1,12 +1,10 @@
 [
   {
     "link":"https://aws.amazon.com/api/dirs/items/search?item.directoryId=alias%23ott-all&sort_by=item.additionalFields.startDate&sort_order=asc&size=30&item.locale=en_US&tags.id=GLOBAL%23event-type%23virtual&tags.id=GLOBAL%23series%23aws-online-tech-talks%7CGLOBAL%23series%23aws-virtual-workshops%7CGLOBAL%23series%23aws-fireside-chat%7CGLOBAL%23series%23aws-office-hours%7CGLOBAL%23series%23aws-online-tech-talks%7CGLOBAL%23series%23aws-virtual-workshops%7CGLOBAL%23series%23aws-fireside-chat%7CGLOBAL%23series%23aws-office-hours",
-    "class_name":"rssfeed_json_entry",
-    "date_format": "%B %d, %Y"
+    "class_name":"rssfeed_json_entry"
   },
   {
     "link":"https://aws.amazon.com/api/dirs/items/search?item.directoryId=partnercast-training-webinar&sort_by=item.additionalFields.sortText&sort_order=asc&size=12&item.locale=en_US&tags.id=GLOBAL%23event-type%23virtual&tags.id=GLOBAL%23language%23english&tags.id=!GLOBAL%23flag%23archived",
-    "class_name":"rssfeed_json_entry",
-    "date_format": "%b %d, %Y"
+    "class_name":"rssfeed_json_entry"
   }
 ]

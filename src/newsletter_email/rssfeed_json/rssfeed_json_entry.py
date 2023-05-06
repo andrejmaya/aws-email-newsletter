@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from dateutil import parser
 import logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -18,5 +18,9 @@ class rssfeed_json_entry:
     self.title = entry['headline']
     self.link = entry['headlineUrl']
     self.level = entry['expertise'] if 'expertise' in entry else "unknown"
-    self.published = datetime.strptime(startDateTime,feed['date_format']).date()
+    try:
+        self.published = parser.parse(startDateTime).date()
+    except ValueError:
+        logging.error(f"Invalid date string:{startDateTime}")
+
 

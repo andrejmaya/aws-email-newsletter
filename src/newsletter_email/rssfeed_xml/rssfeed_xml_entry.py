@@ -1,17 +1,22 @@
-from datetime import datetime, date
+from dateutil import parser
+import logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 class rssfeed_xml_entry:
   """
     title: str
     summary: str
     link: str
-    published: date  
+    published: date
   """
 
   def __init__(self, entry):
     self.title = entry['title']
     self.summary = entry['summary']
     self.link = entry['link']
-    #e.g. Thu, 06 Oct 2022 18:44:38 +0000
-    self.published = datetime.strptime(entry['published'], '%a, %d %b %Y %X %z').date()
-  
+    try:
+        self.published = parser.parse(entry['published']).date()
+    except ValueError:
+        logging.error(f"Invalid date string:{entry['published']}")
+
