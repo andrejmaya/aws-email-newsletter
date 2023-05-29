@@ -24,12 +24,16 @@ jobs:
         role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.ROLE_NAME }}
         aws-region: ${{ vars.AWS_REGION }}
 
-    - name: SAM Deploy
-      id: build-image
+    - name: SAM Validate
       run: |
-        cat >samconfig.toml <<EOL
+        cat >samconfig.toml <<'EOF'
         ${{ vars.SAMCONFIG_TOML }}
-        EOL
+        EOF
         sam --version
+        sam validate
         pip install -r src/newsletter_email/requirements.txt -t src/newsletter_email/dependencies/python
+
+    - name: SAM Deploy
+      if: github.ref == 'refs/heads/master'
+      run: |
         sam deploy
