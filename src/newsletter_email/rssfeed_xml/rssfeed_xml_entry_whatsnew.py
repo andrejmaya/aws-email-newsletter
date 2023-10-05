@@ -9,7 +9,7 @@ class rssfeed_xml_entry_whatsnew(rssfeed_xml_entry):
     def __init__(self, entry):
         super().__init__(entry)
         self.product = ''
-        if 'tags' in entry:
+        if 'tags' in entry and len(entry['tags']) > 0:
             entry_term = entry['tags'][0].term.split(',')[0]
             if '/' in entry_term:
                 entry_term = entry_term.split('/')[-1]
