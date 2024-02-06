@@ -1,10 +1,19 @@
 from rssfeed_xml.rssfeed_xml_entry import *
+import re
 
 
 class rssfeed_xml_entry_whatsnew(rssfeed_xml_entry):
     """
     product: str
   """
+
+    def isAddable(self, cutoff_date):
+        return (
+            super().isAddable(cutoff_date)
+            and not re.compile('govcloud').search(self.product.lower())
+            and not re.compile('now available in').search(self.title.lower())
+        )
+
 
     def __init__(self, entry):
         super().__init__(entry)

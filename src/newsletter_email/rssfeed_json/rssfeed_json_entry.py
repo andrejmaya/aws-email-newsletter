@@ -9,6 +9,8 @@ class rssfeed_json_entry:
     link: str
     published: date
   """
+  def isAddable(self, cutoff_date):
+     return self.published > cutoff_date
 
   def __init__(self, entry, feed):
     #e.g. entry['startDateTime'] == "2022-10-06T20:39:20+00:00"

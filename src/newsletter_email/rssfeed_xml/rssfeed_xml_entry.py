@@ -10,6 +10,9 @@ class rssfeed_xml_entry:
     link: str
     published: date
   """
+  
+  def isAddable(self, cutoff_date):
+     return self.published > cutoff_date
 
   def __init__(self, entry):
     self.title = entry['title']

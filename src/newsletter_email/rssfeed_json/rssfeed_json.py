@@ -25,4 +25,4 @@ class rssfeed_json:
       class_ = getattr(module, feed['class_name'])
       entry_obj = class_(entry['item']['additionalFields'], feed)
       logging.info(f"entry_obj.published:{entry_obj.published} > cutoff_date:{cutoff_date}?")
-      self.entries.append(entry_obj) if entry_obj.published > cutoff_date else None
+      self.entries.append(entry_obj) if entry_obj.isAddable(cutoff_date) else None
