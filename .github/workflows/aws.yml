@@ -34,6 +34,6 @@ jobs:
         pip install -r src/newsletter_email/requirements.txt -t src/newsletter_email/dependencies/python
 
     - name: SAM Deploy
-      if: github.ref == 'refs/heads/master'
+      if: github.ref == 'refs/heads/master' && vars.PIPELINE_SHALL_DEPLOY == 'true'
       run: |
         sam deploy
